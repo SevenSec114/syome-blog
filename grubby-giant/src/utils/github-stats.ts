@@ -6,7 +6,9 @@ interface GitHubStatsData {
   languages: { name: string; percentage: number }[];
 }
 
-export async function loadGitHubStats(username: string, containerId: string): Promise<void> {
+const GITHUB_USERNAME = import.meta.env.GITHUB_USERNAME || 'your-github-username';
+
+export async function loadGitHubStats(containerId: string): Promise<void> {
   try {
     const response = await fetch('/api/github-stats');
     if (!response.ok) {
@@ -109,7 +111,7 @@ export async function loadGitHubStats(username: string, containerId: string): Pr
         
         <div class="mt-4 text-center">
           <a 
-            href="https://github.com/${username}" 
+            href="https://github.com/${GITHUB_USERNAME}" 
             target="_blank" 
             class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
           >

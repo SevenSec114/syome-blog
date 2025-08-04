@@ -55,6 +55,9 @@ To get this project up and running locally:
    npm run dev
    ```
 
+> [!NOTE]
+> You should update the `.env` file just like `.env.template`.
+
 ### Additional Dependencies
 
 For enhanced Markdown rendering, the following dependencies have been added:
