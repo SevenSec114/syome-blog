@@ -1,0 +1,20 @@
+{
+  "name": "syomeblog",
+  "version": "1.0.0",
+  "description": "a simple blog",
+  "homepage": "https://github.com/SevenSec114/SyomeBlog#readme",
+  "bugs": {
+    "url": "https://github.com/SevenSec114/SyomeBlog/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SevenSec114/SyomeBlog.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

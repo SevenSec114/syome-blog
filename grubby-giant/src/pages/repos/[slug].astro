@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import RepoLayout from '../../layouts/RepoLayout.astro';
+
+export async function getStaticPaths() {
+  const projectEntries = await getCollection('repos');
+  return projectEntries.map(entry => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+---
+
+<RepoLayout
+  title={entry.data.title}
+  repoUrl={entry.data.repoUrl}
+  languages={entry.data.languages}
+>
+  <article>
+    <section class="prose prose-lg dark:prose-invert max-w-none">
+      <Content />
+    </section>
+  </article>
+</RepoLayout>

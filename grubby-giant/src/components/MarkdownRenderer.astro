@@ -1,0 +1,40 @@
+---
+interface Props {
+  content: string;
+  maxWidth?: 'normal' | 'wide' | 'full';
+  darkMode?: boolean;
+}
+
+const { content, maxWidth = 'normal', darkMode = true } = Astro.props;
+
+const maxWidthClasses = {
+  normal: 'max-w-2xl',
+  wide: 'max-w-4xl',
+  full: 'max-w-full'
+};
+
+let proseClasses = "prose prose-lg sm:prose-xl";
+
+if (darkMode) {
+  proseClasses += " dark:prose-invert";
+}
+---
+
+<article 
+  class={`
+    ${proseClasses} 
+    ${maxWidthClasses[maxWidth]} 
+    mx-auto 
+    prose-headings:font-bold 
+    prose-a:text-blue-600 
+    prose-a:no-underline 
+    hover:prose-a:underline 
+    prose-blockquote:border-l-blue-500 
+    prose-blockquote:dark:border-l-blue-400
+    prose-code:before:content-none 
+    prose-code:after:content-none
+    prose-pre:bg-gray-800
+    max-w-none
+  `}
+  set:html={content} 
+/>
