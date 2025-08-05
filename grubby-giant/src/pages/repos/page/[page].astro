@@ -7,7 +7,7 @@ import { getCollection } from 'astro:content';
 export async function getStaticPaths() {
   const repos = await getCollection('repos');
   const sortedRepos = repos.sort((a, b) => {
-    return a.data.title.localeCompare(b.data.title);
+    return b.slug.localeCompare(a.slug);
   });
   
   const REPOS_PER_PAGE = 5;
@@ -24,7 +24,7 @@ export async function getStaticPaths() {
 }
 
 const { repos, currentPage, totalPages } = Astro.props;
-const REPOS_PER_PAGE = 10;
+const REPOS_PER_PAGE = 5;
 
 if (currentPage < 1 || isNaN(currentPage)) {
   return Astro.redirect('/404');

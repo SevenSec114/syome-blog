@@ -6,7 +6,8 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
 const latestPost = sortedPosts[0];
 
 const repos = await getCollection('repos');
-const latestRepo = repos[0];
+const sortedRepos = repos.sort((a, b) => b.slug.localeCompare(a.slug));
+const latestRepo = sortedRepos[0];
 ---
 
 <section class="mt-12">

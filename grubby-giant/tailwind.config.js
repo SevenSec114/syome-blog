@@ -22,6 +22,7 @@ export default {
             },
             'code': {
               backgroundColor: '#777777',
+              color: '#ffffff',
               padding: '0.2em 0.4em',
               borderRadius: '0.25em',
             },
