@@ -19,8 +19,6 @@ const repos = defineCollection({
   }),
 });
 
-export const GITHUB_USERNAME = import.meta.env.GITHUB_USERNAME || 'your-github-username';
-
 export const collections = {
   posts,
   repos

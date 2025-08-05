@@ -6,7 +6,7 @@ interface GitHubStatsData {
   languages: { name: string; percentage: number }[];
 }
 
-const GITHUB_USERNAME = import.meta.env.GITHUB_USERNAME || 'your-github-username';
+const GITHUB_USERNAME = import.meta.env.PUBLIC_GITHUB_USERNAME;
 
 export async function loadGitHubStats(containerId: string): Promise<void> {
   try {
