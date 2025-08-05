@@ -160,6 +160,9 @@ All blog posts and repos are written in Markdown and stored in `src/content/`. E
 - `language` - Reops' language usage for its post
 - `repoUrl` - The github URL of the repo
 
+> [!TIP]
+> While typing fenced code block, keep the first line of the code block empty can `hide the copy button`
+
 ### Styling
 
 Styling is done with Tailwind CSS. Custom styles should be added to component files or global styles in `src/styles/`.

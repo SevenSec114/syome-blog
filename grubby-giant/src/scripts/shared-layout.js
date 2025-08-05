@@ -1,3 +1,5 @@
+import addCopyButtons from './code-copy.js';
+
 function decodeHTML(html) {
   const txt = document.createElement("textarea");
   txt.innerHTML = html;
@@ -35,6 +37,8 @@ document.addEventListener("DOMContentLoaded", function () {
       anchor.setAttribute("rel", "noopener noreferrer");
     }
   });
+
+  addCopyButtons();
 
   setTimeout(() => {
     if (loader) {
