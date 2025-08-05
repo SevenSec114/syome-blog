@@ -13,10 +13,19 @@ function addCopyButtons() {
       code.removeChild(codeFirstLine);
       return;
     } else {
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.display = 'block';
+      
+      block.parentNode.insertBefore(wrapper, block);
+      wrapper.appendChild(block);
+      
       const button = document.createElement('button');
       button.className = 'copy-button absolute top-2 right-2 bg-gray-700 text-white rounded px-2 py-1 text-xs hover:bg-gray-600 transition-colors';
       button.textContent = 'Copy';
       button.setAttribute('aria-label', 'Copy code to clipboard');
+      button.style.position = 'absolute';
+      button.style.zIndex = '10';
 
       button.addEventListener('click', () => {
         const text = code.innerText;
@@ -36,8 +45,7 @@ function addCopyButtons() {
         });
       });
 
-      block.style.position = 'relative';
-      block.appendChild(button);
+      wrapper.appendChild(button);
     }
   });
 
