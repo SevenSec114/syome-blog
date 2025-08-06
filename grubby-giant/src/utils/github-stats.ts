@@ -8,7 +8,104 @@ interface GitHubStatsData {
 
 const GITHUB_USERNAME = import.meta.env.PUBLIC_GITHUB_USERNAME;
 
-export async function loadGitHubStats(containerId: string): Promise<void> {
+function easeOutQuart(x: number): number {
+  return 1 - Math.pow(1 - x, 4);
+}
+
+function animateNumber(element: HTMLElement, target: number, decimals: number = 0, duration: number = 1000, isPercentage: boolean = false) {
+  const startTime = performance.now();
+  
+  const animate = (currentTime: number) => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = easeOutQuart(progress);
+    const current = target * easedProgress;
+    
+    if (progress < 1) {
+      const formattedNumber = Number(current).toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+      element.textContent = isPercentage ? formattedNumber + '%' : formattedNumber;
+      requestAnimationFrame(animate);
+    } else {
+      const formattedNumber = Number(target).toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+      element.textContent = isPercentage ? formattedNumber + '%' : formattedNumber;
+    }
+  };
+  
+  requestAnimationFrame(animate);
+}
+
+function animateProgressBar(element: HTMLElement, targetWidth: number, duration: number = 1000) {
+  const startTime = performance.now();
+  
+  const animate = (currentTime: number) => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = easeOutQuart(progress);
+    const currentWidth = targetWidth * easedProgress;
+    
+    if (progress < 1) {
+      element.style.width = currentWidth + '%';
+      requestAnimationFrame(animate);
+    } else {
+      element.style.width = targetWidth + '%';
+    }
+  };
+  
+  requestAnimationFrame(animate);
+}
+
+function isInViewport(element: HTMLElement): boolean {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+function animateExtraLanguages() {
+  document.querySelectorAll('.progress-bar-extra').forEach((bar: Element) => {
+    const progressBar = bar as HTMLElement;
+    const targetWidth = parseFloat(progressBar.dataset.targetWidth || '0');
+    const index = progressBar.dataset.index;
+    
+    const percentElement = document.getElementById(`extra-lang-percent-${index}`);
+    if (percentElement) {
+      animateNumber(percentElement, targetWidth, 2, 1000, true);
+    }
+    
+    animateProgressBar(progressBar, targetWidth);
+  });
+}
+
+function initLazyAnimations(githubStats: GitHubStatsData) {
+  animateNumber(document.getElementById('contributions-count')!, githubStats.contributions, 0);
+  animateNumber(document.getElementById('repositories-count')!, githubStats.totalRepositories, 0);
+  animateNumber(document.getElementById('public-repos-count')!, githubStats.publicRepositories, 0);
+  animateNumber(document.getElementById('private-repos-count')!, githubStats.privateRepositories, 0);
+  
+  document.querySelectorAll('.progress-bar').forEach((bar: Element) => {
+    const progressBar = bar as HTMLElement;
+    const targetWidth = parseFloat(progressBar.dataset.targetWidth || '0');
+    const index = progressBar.dataset.index;
+    
+    const percentElement = document.getElementById(`lang-percent-${index}`);
+    if (percentElement) {
+      animateNumber(percentElement, targetWidth, 2, 1000, true);
+    }
+    
+    animateProgressBar(progressBar, targetWidth);
+  });
+}
+
+export async function loadGitHubStats(): Promise<void> {
   try {
     const response = await fetch('/api/github-stats');
     if (!response.ok) {
@@ -26,11 +123,11 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
       contentElement.innerHTML = `
         <div class="grid grid-cols-2 gap-4 mb-4">
           <div class="text-center p-3 bg-gray-50 dark:bg-gray-600 rounded-lg">
-            <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">${githubStats.contributions}</p>
+            <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" id="contributions-count">0</p>
             <p class="text-sm text-gray-600 dark:text-gray-300">Contributions</p>
           </div>
           <div class="text-center p-3 bg-gray-50 dark:bg-gray-600 rounded-lg">
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400">${githubStats.totalRepositories}</p>
+            <p class="text-2xl font-bold text-green-600 dark:text-green-400" id="repositories-count">0</p>
             <p class="text-sm text-gray-600 dark:text-gray-300">Total Repositories</p>
           </div>
         </div>
@@ -38,12 +135,12 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
         <div class="flex justify-between mb-4">
           <div class="text-center">
             <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
-              Public: ${githubStats.publicRepositories}
+              Public: <span id="public-repos-count">0</span>
             </span>
           </div>
           <div class="text-center">
             <span class="inline-block px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">
-              Private: ${githubStats.privateRepositories}
+              Private: <span id="private-repos-count">0</span>
             </span>
           </div>
         </div>
@@ -52,16 +149,18 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
           <div>
             <h4 class="font-medium text-gray-900 dark:text-white mb-2">Language Usage</h4>
             <div class="space-y-2" id="language-stats">
-              ${githubStats.languages.slice(0, 5).map((lang) => `
+              ${githubStats.languages.slice(0, 5).map((lang, index) => `
                 <div>
                   <div class="flex justify-between text-sm mb-1">
                     <span class="text-gray-700 dark:text-gray-300">${lang.name}</span>
-                    <span class="text-gray-500 dark:text-gray-400">${lang.percentage.toFixed(1)}%</span>
+                    <span class="text-gray-500 dark:text-gray-400" id="lang-percent-${index}">0.00%</span>
                   </div>
                   <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                     <div 
-                      class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full" 
-                      style="width: ${lang.percentage}%"
+                      class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full progress-bar" 
+                      data-target-width="${lang.percentage}"
+                      data-index="${index}"
+                      style="width: 0%"
                     ></div>
                   </div>
                 </div>
@@ -71,16 +170,18 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
                 <div class="mt-4">
                   <div id="extra-languages" class="max-h-0 overflow-hidden transition-all duration-500">
                     <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                      ${githubStats.languages.slice(5).map((lang) => `
+                      ${githubStats.languages.slice(5).map((lang, index) => `
                         <div>
                           <div class="flex justify-between text-sm mb-1">
                             <span class="text-gray-700 dark:text-gray-300">${lang.name}</span>
-                            <span class="text-gray-500 dark:text-gray-400">${lang.percentage.toFixed(1)}%</span>
+                            <span class="text-gray-500 dark:text-gray-400" id="extra-lang-percent-${index}">0.00%</span>
                           </div>
                           <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                             <div 
-                              class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full" 
-                              style="width: ${lang.percentage}%"
+                              class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full progress-bar-extra" 
+                              data-target-width="${lang.percentage}"
+                              data-index="${index}"
+                              style="width: 0%"
                             ></div>
                           </div>
                         </div>
@@ -111,7 +212,7 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
         
         <div class="mt-4 text-center">
           <a 
-            href="https://github.com/${GITHUB_USERNAME}" 
+            href="https://github.com/${GITHUB_USERNAME}"
             target="_blank" 
             class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
           >
@@ -125,6 +226,19 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
       
       contentElement.classList.remove('hidden');
       
+      const animateOnScroll = () => {
+        if (isInViewport(contentElement)) {
+          initLazyAnimations(githubStats);
+          window.removeEventListener('scroll', animateOnScroll);
+        }
+      };
+      
+      if (isInViewport(contentElement)) {
+        initLazyAnimations(githubStats);
+      } else {
+        window.addEventListener('scroll', animateOnScroll);
+      }
+      
       const toggleButton = document.getElementById('toggle-languages');
       const extraLanguages = document.getElementById('extra-languages');
       const toggleText = document.getElementById('toggle-text');
@@ -133,6 +247,7 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
       if (toggleButton && extraLanguages && toggleText && toggleArrow) {
         let isExpanded = false;
         const remainingCount = githubStats.languages.length - 5;
+        let hasAnimated = false;
         
         toggleButton.addEventListener('click', () => {
           isExpanded = !isExpanded;
@@ -141,6 +256,13 @@ export async function loadGitHubStats(containerId: string): Promise<void> {
             extraLanguages.style.maxHeight = '96rem';
             toggleText.textContent = 'Collapse';
             toggleArrow.style.transform = 'rotate(180deg)';
+            
+            if (!hasAnimated) {
+              setTimeout(() => {
+                animateExtraLanguages();
+                hasAnimated = true;
+              }, 100);
+            }
           } else {
             extraLanguages.style.maxHeight = '0';
             
