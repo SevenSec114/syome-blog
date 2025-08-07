@@ -55,13 +55,15 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
 
     const repos = await reposResponse.json();
 
-    const publicRepos = repos.filter((repo: any) => !repo.private).length;
-    const privateRepos = repos.filter((repo: any) => repo.private).length;
+    const nonForkRepos = repos.filter((repo: any) => !repo.fork);
+
+    const publicRepos = nonForkRepos.filter((repo: any) => !repo.private).length;
+    const privateRepos = nonForkRepos.filter((repo: any) => repo.private).length;
 
     const languageStats: { [key: string]: number } = {};
     let totalSize = 0;
 
-    const languagePromises = repos.map(async (repo: any) => {
+    const languagePromises = nonForkRepos.map(async (repo: any) => {
       const langResponse = await fetch(repo.languages_url, {
         headers: {
           Authorization: `token ${token}`,
