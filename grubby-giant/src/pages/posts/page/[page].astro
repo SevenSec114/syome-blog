@@ -7,8 +7,8 @@ import { getCollection } from 'astro:content';
 export async function getStaticPaths() {
   const posts = await getCollection('posts');
   const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-  
-  const POSTS_PER_PAGE = 10;
+
+  const POSTS_PER_PAGE = 5;
   const totalPages = Math.ceil(sortedPosts.length / POSTS_PER_PAGE);
   
   return Array.from({ length: totalPages }, (_, i) => ({
