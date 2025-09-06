@@ -17,7 +17,7 @@ const { title, description, pubDate, content } = Astro.props;
 		<title>{title}</title>
 		<meta name="description" content={description} />
 	</head>
-	<body class="min-h-screen bg-white dark:bg-gray-900">
+	<body class="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
 		<div class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center page-loader">
 			<div class="text-2xl font-bold text-gray-800 dark:text-white loader-text">Loading...</div>
 		</div>
@@ -46,7 +46,7 @@ const { title, description, pubDate, content } = Astro.props;
 			</div>
 		</header>
 		
-		<main class="max-w-4xl mx-auto px-4 py-8 relative z-10 page-content">
+		<main class="max-w-4xl mx-auto px-4 py-8 relative z-10 page-content flex-grow">
 			<header class="mb-10 text-center">
 				{pubDate && (
 					<time class="inline-block px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full dark:text-blue-300 dark:bg-blue-900/50 mb-4">
