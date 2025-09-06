@@ -6,44 +6,33 @@ import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const repos = await getCollection('repos');
-  const sortedRepos = repos.sort((a, b) => {
-    return b.slug.localeCompare(a.slug);
-  });
-  
+  const sortedRepos = repos.sort((a, b) => b.slug.localeCompare(a.slug));
+
   const REPOS_PER_PAGE = 5;
   const totalPages = Math.ceil(sortedRepos.length / REPOS_PER_PAGE);
   
   if (totalPages === 0) {
     return [{
       params: { page: "1" },
-      props: {
-        repos: sortedRepos,
-        currentPage: 1,
-        totalPages: 1
-      },
+      props: { currentPage: 1, repos: sortedRepos }
     }];
   }
   
   return Array.from({ length: totalPages }, (_, i) => ({
     params: { page: (i + 1).toString() },
-    props: { 
-      repos: sortedRepos,
-      currentPage: i + 1,
-      totalPages
-    },
+    props: { currentPage: i + 1, repos: sortedRepos }
   }));
 }
 
-const { repos, currentPage, totalPages } = Astro.props;
-const REPOS_PER_PAGE = 5;
+const { currentPage, repos } = Astro.props;
 
-if (currentPage < 1 || isNaN(currentPage)) {
-  return Astro.redirect('/404');
-}
+const REPOS_PER_PAGE = 5;
+const sortedRepos = repos.sort((a, b) => b.slug.localeCompare(a.slug));
+const totalPages = Math.ceil(sortedRepos.length / REPOS_PER_PAGE) || 1;
 
 const startIndex = (currentPage - 1) * REPOS_PER_PAGE;
 const endIndex = startIndex + REPOS_PER_PAGE;
-const paginatedRepos = repos.slice(startIndex, endIndex);
+const paginatedRepos = sortedRepos.slice(startIndex, endIndex);
 ---
 
 <div class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center page-loader">
@@ -78,7 +67,7 @@ const paginatedRepos = repos.slice(startIndex, endIndex);
                 <p class="text-gray-600 dark:text-gray-400 mb-4">
                   {project.data.description}
                 </p>
-                <div class="flex flex-wrap gap-2 mb-3">
+                <div class="flex flex-wrap gap-2">
                   {project.data.tags?.map(tag => (
                     <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded dark:bg-blue-900 dark:text-blue-300">{tag}</span>
                   ))}
