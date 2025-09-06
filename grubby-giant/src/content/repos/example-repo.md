@@ -8,3 +8,7 @@ languages: ["Astro", "TypeScript", "CSS", "JavaScript"]
 
 ## Main Content
 Here you can write your main content of your repo description, using markdown.
+
+---
+
+Have a nice blog experience :)

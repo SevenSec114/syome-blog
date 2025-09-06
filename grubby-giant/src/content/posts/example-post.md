@@ -46,4 +46,4 @@ pring("Hello World")
 
 ---
 
-Have a nice post experience :)
+Have a nice blog experience :)

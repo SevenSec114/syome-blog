@@ -19,7 +19,7 @@ const { title, repoUrl, languages } = Astro.props as Props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
-	</head>
+</head>
 	<body class="min-h-screen bg-white dark:bg-gray-900">
 		<div class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center page-loader">
 			<div class="text-2xl font-bold text-gray-800 dark:text-white loader-text">Loading...</div>
@@ -83,6 +83,6 @@ const { title, repoUrl, languages } = Astro.props as Props;
 		
 		<Footer />
 
-		<script src="/src/scripts/shared-layout.js"></script>
+		<script src="/src/scripts/shared-layout.ts"></script>
 	</body>
 </html>
