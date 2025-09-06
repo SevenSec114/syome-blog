@@ -1,11 +1,12 @@
 import type { APIRoute } from 'astro';
+import siteConfig from '../../content/site-config';
 
 const GITHUB_USERNAME = import.meta.env.PUBLIC_GITHUB_USERNAME;
 const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN;
 
 export const GET: APIRoute = async () => {
   try {
-    const stats = await fetchGitHubStats(GITHUB_USERNAME);
+    const stats = await fetchGitHubStats();
     
     return new Response(JSON.stringify(stats), {
       status: 200,
@@ -34,23 +35,22 @@ export interface GitHubStats {
   languages: { name: string; percentage: number }[];
 }
 
-export async function fetchGitHubStats(username: string = GITHUB_USERNAME): Promise<GitHubStats> {
-
+export async function fetchGitHubStats(): Promise<GitHubStats> {
   if (!GITHUB_TOKEN) {
     throw new Error("No GitHub token found.");
   }
 
-  if (!username) {
+  if (!GITHUB_USERNAME) {
     throw new Error("No GitHub username provided.");
   }
 
   try {
-    const contributions = await getTotalContributions(GITHUB_TOKEN, username);
+    const contributions = await getTotalContributions(GITHUB_TOKEN, GITHUB_USERNAME);
 
-    const reposResponse = await fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`, {
+    const reposResponse = await fetch("https://api.github.com/user/repos?sort=updated&affiliation=owner,collaborator", {
       headers: {
         Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": "SyomeBlog"
+        "User-Agent": siteConfig.siteName
       }
     });
 
@@ -72,7 +72,7 @@ export async function fetchGitHubStats(username: string = GITHUB_USERNAME): Prom
       const langResponse = await fetch(repo.languages_url, {
         headers: {
           Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "SyomeBlog"
+          "User-Agent": siteConfig.siteName
         }
       });
 
@@ -116,10 +116,50 @@ export async function fetchGitHubStats(username: string = GITHUB_USERNAME): Prom
 }
 
 async function getTotalContributions(token: string, username: string): Promise<number> {
+  // First get the user's creation year
+  const userQuery = `
+    query($username: String!) {
+      user(login: $username) {
+        createdAt
+      }
+    }
+  `;
+
+  const userResponse = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "User-Agent": siteConfig.siteName
+    },
+    body: JSON.stringify({ 
+      query: userQuery,
+      variables: { username }
+    })
+  });
+  
   const currentYear = new Date().getFullYear();
+
+  if (!userResponse.ok) {
+    console.warn(`Error fetching user data: ${userResponse.status}`);
+    // Fallback to current year
+    var startYear = currentYear;
+  } else {
+    const userData = await userResponse.json();
+    
+    if (userData.errors) {
+      console.warn(`GraphQL errors fetching user data:`, userData.errors);
+      var startYear = currentYear;
+    } else {
+      // Extract the year from the createdAt field
+      const createdAt = new Date(userData.data.user.createdAt);
+      var startYear = createdAt.getFullYear();
+    }
+  }
+
   let total = 0;
 
-  for (let year = 2023; year <= currentYear; year++) {
+  for (let year = startYear; year <= currentYear; year++) {
     const from = `${year}-01-01T00:00:00Z`;
     const to = year === currentYear
       ? new Date().toISOString()
@@ -142,7 +182,7 @@ async function getTotalContributions(token: string, username: string): Promise<n
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-        "User-Agent": "SyomeBlog"
+        "User-Agent": siteConfig.siteName
       },
       body: JSON.stringify({ 
         query,
