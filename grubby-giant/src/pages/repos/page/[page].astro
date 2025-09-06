@@ -13,6 +13,17 @@ export async function getStaticPaths() {
   const REPOS_PER_PAGE = 5;
   const totalPages = Math.ceil(sortedRepos.length / REPOS_PER_PAGE);
   
+  if (totalPages === 0) {
+    return [{
+      params: { page: "1" },
+      props: { 
+        repos: sortedRepos,
+        currentPage: 1,
+        totalPages: 1
+      },
+    }];
+  }
+  
   return Array.from({ length: totalPages }, (_, i) => ({
     params: { page: (i + 1).toString() },
     props: { 
@@ -33,10 +44,6 @@ if (currentPage < 1 || isNaN(currentPage)) {
 const startIndex = (currentPage - 1) * REPOS_PER_PAGE;
 const endIndex = startIndex + REPOS_PER_PAGE;
 const paginatedRepos = repos.slice(startIndex, endIndex);
-
-if (paginatedRepos.length === 0 && currentPage !== 1) {
-  return Astro.redirect('/404');
-}
 ---
 
 <div class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center page-loader">
@@ -55,38 +62,45 @@ if (paginatedRepos.length === 0 && currentPage !== 1) {
     </a>
   </div>
   
-  <div class="grid grid-cols-1 gap-6 cards-container">
-    {paginatedRepos.map((project, index) => (
-      <article class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 staggered-card transform hover:-translate-y-1" data-index={index}>
-        <div class="p-6">
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
-            <a href={`/repos/${project.slug}`} class="hover:underline">{project.data.title}</a>
-          </h2>
-          <p class="text-gray-600 dark:text-gray-400 mb-4">
-            {project.data.description}
-          </p>
-          <div class="flex flex-wrap gap-2 mb-3">
-            {project.data.tags?.map(tag => (
-              <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded dark:bg-blue-900 dark:text-blue-300">{tag}</span>
-            ))}
-          </div>
-        </div>
-      </article>
-    ))}
-  </div>
+  {
+    paginatedRepos.length === 0
+      ? (<div class="text-center py-12">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">No repos yet</h2>
+          <p class="text-gray-600 dark:text-gray-400">Check back later for new repositories.</p>
+        </div>)
+      : (<div class="grid grid-cols-1 gap-6 cards-container">
+          {paginatedRepos.map((project, index) => (
+            <article class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 staggered-card transform hover:-translate-y-1" data-index={index}>
+              <div class="p-6">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+                  <a href={`/repos/${project.slug}`} class="hover:underline">{project.data.title}</a>
+                </h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                  {project.data.description}
+                </p>
+                <div class="flex flex-wrap gap-2 mb-3">
+                  {project.data.tags?.map(tag => (
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded dark:bg-blue-900 dark:text-blue-300">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>)
+  }
   
   {totalPages > 1 && (
     <div class="mt-12 flex justify-center">
       <nav class="flex items-center space-x-2">
         {currentPage > 1 ? (
-          <a href={`/repos/page/${currentPage - 1}`} class="px-3 py-1 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded">Previous</a>
+          <a href={currentPage === 2 ? '/repos' : `/repos/page/${currentPage - 1}`} class="px-3 py-1 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded">Previous</a>
         ) : (
           <span class="px-3 py-1 text-gray-500 dark:text-gray-400">Previous</span>
         )}
         
         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
           <a 
-            href={`/repos/page/${page}`}
+            href={page === 1 ? '/repos' : `/repos/page/${page}`}
             class={`px-3 py-1 rounded ${page === currentPage ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
           >
             {page}

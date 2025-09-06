@@ -116,7 +116,6 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
 }
 
 async function getTotalContributions(token: string, username: string): Promise<number> {
-  // First get the user's creation year
   const userQuery = `
     query($username: String!) {
       user(login: $username) {
@@ -142,7 +141,6 @@ async function getTotalContributions(token: string, username: string): Promise<n
 
   if (!userResponse.ok) {
     console.warn(`Error fetching user data: ${userResponse.status}`);
-    // Fallback to current year
     var startYear = currentYear;
   } else {
     const userData = await userResponse.json();
@@ -151,7 +149,6 @@ async function getTotalContributions(token: string, username: string): Promise<n
       console.warn(`GraphQL errors fetching user data:`, userData.errors);
       var startYear = currentYear;
     } else {
-      // Extract the year from the createdAt field
       const createdAt = new Date(userData.data.user.createdAt);
       var startYear = createdAt.getFullYear();
     }
