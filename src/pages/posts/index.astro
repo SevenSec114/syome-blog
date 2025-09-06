@@ -60,6 +60,11 @@ import SearchBar from "../../components/SearchBar.astro";
       searchQuery = event.detail.value.toLowerCase();
       filterPosts();
       loadPage(1);
+
+      const cards = document.querySelectorAll('.staggered-card:not(.card-ready)');
+      cards.forEach(card => {
+        card.classList.add('card-ready');
+      });
     });
     
     function filterPosts() {
