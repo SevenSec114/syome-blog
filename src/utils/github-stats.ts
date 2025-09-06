@@ -3,6 +3,7 @@ interface GitHubStatsData {
   totalRepositories: number;
   publicRepositories: number;
   privateRepositories: number;
+  collaboratorRepositories: number;
   totalStars: number;
   totalPullRequests: number;
   totalIssues: number;
@@ -16,7 +17,6 @@ function easeOutQuart(x: number): number {
 }
 
 function animateNumber(element: HTMLElement | null, target: number, decimals: number = 0, duration: number = 1000, isPercentage: boolean = false) {
-  // Check if element exists
   if (!element) {
     console.warn('Element not found for animation');
     return;
@@ -123,6 +123,7 @@ function initLazyAnimations(githubStats: GitHubStatsData) {
   animateNumber(document.getElementById('repositories-count'), githubStats.totalRepositories || 0, 0);
   animateNumber(document.getElementById('public-repos-count'), githubStats.publicRepositories || 0, 0);
   animateNumber(document.getElementById('private-repos-count'), githubStats.privateRepositories || 0, 0);
+  animateNumber(document.getElementById('collab-repos-count'), githubStats.collaboratorRepositories || 0, 0);
   animateNumber(document.getElementById('stars-count'), githubStats.totalStars || 0, 0);
   animateNumber(document.getElementById('prs-count'), githubStats.totalPullRequests || 0, 0);
   animateNumber(document.getElementById('issues-count'), githubStats.totalIssues || 0, 0);
@@ -181,10 +182,15 @@ export async function loadGitHubStats(): Promise<void> {
           </div>
         </div>
         
-        <div class="flex justify-between mb-4">
+        <div class="flex flex-wrap justify-between gap-2 mb-4">
           <div class="text-center">
             <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
               Public: <span id="public-repos-count">0</span>
+            </span>
+          </div>
+          <div class="text-center">
+            <span class="inline-block px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm">
+              Collaborator: <span id="collab-repos-count">0</span>
             </span>
           </div>
           <div class="text-center">

@@ -31,6 +31,7 @@ export interface GitHubStats {
   totalRepositories: number;
   publicRepositories: number;
   privateRepositories: number;
+  collaboratorRepositories: number;
   totalStars: number;
   totalPullRequests: number;
   totalIssues: number;
@@ -64,8 +65,12 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
 
     const nonForkRepos = repos.filter((repo: any) => !repo.fork);
 
-    const publicRepos = nonForkRepos.filter((repo: any) => !repo.private).length;
-    const privateRepos = nonForkRepos.filter((repo: any) => repo.private).length;
+    const ownerRepos = nonForkRepos.filter((repo: any) => repo.owner.login === GITHUB_USERNAME);
+    const collaboratorRepos = nonForkRepos.filter((repo: any) => repo.owner.login !== GITHUB_USERNAME);
+    
+    const publicRepos = ownerRepos.filter((repo: any) => !repo.private).length;
+    const privateRepos = ownerRepos.filter((repo: any) => repo.private).length;
+    const collaboratorRepoCount = collaboratorRepos.length;
     
     const totalStars = nonForkRepos.reduce((sum: number, repo: any) => {
       const stars = repo.stargazers_count || 0;
@@ -181,6 +186,7 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
       totalRepositories: nonForkRepos.length,
       publicRepositories: publicRepos,
       privateRepositories: privateRepos,
+      collaboratorRepositories: collaboratorRepoCount,
       totalStars,
       totalPullRequests,
       totalIssues,
