@@ -1,8 +1,9 @@
 ---
+import siteConfig from '../content/site-config';
 ---
 
 <footer class="mt-12 py-8 text-center text-gray-600 dark:text-gray-300 text-sm border-t border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 relative">
     <div class="max-w-4xl mx-auto px-4">
-        <p>© {new Date().getFullYear()} Syam's Blog. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} {siteConfig.author}'s Blog. All rights reserved.</p>
     </div>
 </footer>

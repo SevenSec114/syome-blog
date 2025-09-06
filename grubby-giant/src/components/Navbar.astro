@@ -1,5 +1,7 @@
 ---
 import "../styles/home.css";
+import siteConfig from '../content/site-config';
+import blogImg from "../assets/page/blog.png";
 
 interface Props {
   siteName?: string;
@@ -9,8 +11,8 @@ interface Props {
 }
 
 const {
-  siteName = "Syome",
-  avatarImage = "",
+  siteName = siteConfig.siteName,
+  avatarImage = blogImg,
   avatarAlt = "Avatar",
   menuItems = [
     { name: "Posts", link: "/posts" },
@@ -27,7 +29,7 @@ const {
         <div class="absolute left-1/2 transform -translate-x-1/2">
           <div class="avatar-container">
             <div class="w-16 h-16 rounded-full shadow-lg overflow-hidden soft-border">
-              <img src={avatarImage} alt={avatarAlt} class="w-full h-full object-cover floating-image" width="64" height="64" />
+              <img src={typeof avatarImage === 'string' ? avatarImage : avatarImage.src} alt={avatarAlt} class="w-full h-full object-cover floating-image" width="64" height="64" />
             </div>
           </div>
         </div>

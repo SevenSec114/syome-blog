@@ -1,8 +1,11 @@
 import type { APIRoute } from 'astro';
 
+const GITHUB_USERNAME = import.meta.env.PUBLIC_GITHUB_USERNAME;
+const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN;
+
 export const GET: APIRoute = async () => {
   try {
-    const stats = await fetchGitHubStats();
+    const stats = await fetchGitHubStats(GITHUB_USERNAME);
     
     return new Response(JSON.stringify(stats), {
       status: 200,
@@ -31,19 +34,22 @@ export interface GitHubStats {
   languages: { name: string; percentage: number }[];
 }
 
-export async function fetchGitHubStats(): Promise<GitHubStats> {
-  const token = import.meta.env.GITHUB_TOKEN;
+export async function fetchGitHubStats(username: string = GITHUB_USERNAME): Promise<GitHubStats> {
 
-  if (!token) {
+  if (!GITHUB_TOKEN) {
     throw new Error("No GitHub token found.");
   }
 
-  try {
-    const contributions = await getTotalContributions(token);
+  if (!username) {
+    throw new Error("No GitHub username provided.");
+  }
 
-    const reposResponse = await fetch("https://api.github.com/user/repos?per_page=100&sort=updated", {
+  try {
+    const contributions = await getTotalContributions(GITHUB_TOKEN, username);
+
+    const reposResponse = await fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`, {
       headers: {
-        Authorization: `token ${token}`,
+        Authorization: `token ${GITHUB_TOKEN}`,
         "User-Agent": "SyomeBlog"
       }
     });
@@ -65,7 +71,7 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
     const languagePromises = nonForkRepos.map(async (repo: any) => {
       const langResponse = await fetch(repo.languages_url, {
         headers: {
-          Authorization: `token ${token}`,
+          Authorization: `token ${GITHUB_TOKEN}`,
           "User-Agent": "SyomeBlog"
         }
       });
@@ -109,7 +115,7 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
   }
 }
 
-async function getTotalContributions(token: string): Promise<number> {
+async function getTotalContributions(token: string, username: string): Promise<number> {
   const currentYear = new Date().getFullYear();
   let total = 0;
 
@@ -120,8 +126,8 @@ async function getTotalContributions(token: string): Promise<number> {
       : `${year}-12-31T23:59:59Z`;
 
     const query = `
-      query {
-        viewer {
+      query($username: String!) {
+        user(login: $username) {
           contributionsCollection(from: "${from}", to: "${to}") {
             contributionCalendar {
               totalContributions
@@ -138,7 +144,10 @@ async function getTotalContributions(token: string): Promise<number> {
         "Content-Type": "application/json",
         "User-Agent": "SyomeBlog"
       },
-      body: JSON.stringify({ query })
+      body: JSON.stringify({ 
+        query,
+        variables: { username }
+      })
     });
 
     if (!response.ok) {
@@ -147,7 +156,13 @@ async function getTotalContributions(token: string): Promise<number> {
     }
 
     const result = await response.json();
-    total += result.data.viewer.contributionsCollection.contributionCalendar.totalContributions;
+    
+    if (result.errors) {
+      console.warn(`GraphQL errors for ${year}:`, result.errors);
+      continue;
+    }
+    
+    total += result.data.user.contributionsCollection.contributionCalendar.totalContributions;
   }
 
   return total;

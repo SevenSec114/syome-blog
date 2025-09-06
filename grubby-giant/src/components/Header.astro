@@ -1,5 +1,6 @@
 ---
 import "../styles/home.css";
+import siteConfig from '../content/site-config';
 ---
 
 <header class="relative overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600 text-white">
@@ -14,11 +15,11 @@ import "../styles/home.css";
       <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-snug">
         <span class="block">Welcome to</span>
         <span class="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-300 leading-snug">
-          Syome
+          {siteConfig.siteName}
         </span>
       </h1>
       <p class="mt-4 max-w-lg mx-auto text-xl opacity-90">
-        A developer's journey through code and creativity
+        {siteConfig.siteDescription}
       </p>
     </div>
   </div>

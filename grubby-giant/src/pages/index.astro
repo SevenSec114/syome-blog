@@ -7,6 +7,7 @@ import FeaturedPosts from "../components/FeaturedPosts.astro";
 import About from "../components/About.astro";
 import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
+import siteConfig from "../content/site-config";
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -15,7 +16,7 @@ import Footer from "../components/Footer.astro";
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Syome</title>
+		<title>{siteConfig.siteName}</title>
 	</head>
 	<Layout />
 		<div class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center page-loader">
