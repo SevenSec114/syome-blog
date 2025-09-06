@@ -1,0 +1,26 @@
+---
+import "../styles/home.css";
+import siteConfig from '../content/site-config';
+---
+
+<header class="relative overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+  <div class="absolute inset-0 opacity-20">
+    <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-white rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
+    <div class="absolute top-1/3 right-1/4 w-64 h-64 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
+    <div class="absolute bottom-1/4 left-1/2 w-64 h-64 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
+  </div>
+  
+  <div class="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+    <div class="text-center">
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-snug">
+        <span class="block">Welcome to</span>
+        <span class="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-300 leading-snug">
+          {siteConfig.siteName}
+        </span>
+      </h1>
+      <p class="mt-4 max-w-lg mx-auto text-xl opacity-90">
+        {siteConfig.siteDescription}
+      </p>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,31 @@
+---
+const { title } = Astro.props;
+import "../styles/bubbles.css"
+import siteConfig from '../content/site-config';
+---
+
+<!doctype html>
+<html lang="en" class="h-full">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{siteConfig.siteName} - {title}</title>
+	</head>
+	<body class="h-full bg-white dark:bg-gray-900">
+		<div class="fixed inset-0 z-[-1] bg-gradient-to-br from-white to-gray-200 dark:from-gray-800 dark:to-gray-900"></div>
+		
+		<div class="fixed inset-0 z-[-1]">
+			<div class="floating-bubbles">
+				<div class="bubble"></div>
+				<div class="bubble"></div>
+				<div class="bubble"></div>
+				<div class="bubble"></div>
+				<div class="bubble"></div>
+			</div>
+		</div>
+		
+		<slot />
+	</body>
+</html>
