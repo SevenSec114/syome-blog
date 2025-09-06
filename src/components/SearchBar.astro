@@ -21,3 +21,18 @@ const { placeholder = "Search..." } = Astro.props;
     </div>
   </div>
 </div>
+
+<script>
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target) {
+        const event = new CustomEvent('search-input', { 
+          detail: { value: target.value } 
+        });
+        document.dispatchEvent(event);
+      }
+    });
+  }
+</script>
