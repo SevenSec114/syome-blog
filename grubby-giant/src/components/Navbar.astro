@@ -1,22 +1,41 @@
 ---
 import "../styles/home.css";
-import avatar from "../assets/page/syome.png";
+
+interface Props {
+  siteName?: string;
+  avatarImage?: string;
+  avatarAlt?: string;
+  menuItems?: Array<{ name: string; link: string }>;
+}
+
+const {
+  siteName = "Syome",
+  avatarImage = "",
+  avatarAlt = "Avatar",
+  menuItems = [
+    { name: "Posts", link: "/posts" },
+    { name: "Repos", link: "/repos" }
+  ]
+} = Astro.props;
 ---
 
 <nav class="backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
   <div class="max-w-3xl mx-auto px-4 py-3">
     <div class="flex justify-between items-center">
-      <a href="/" class="text-xl font-bold text-gray-800 dark:text-white">Syome</a>
-      <div class="absolute left-1/2 transform -translate-x-1/2">
-        <div class="avatar-container">
-          <div class="w-16 h-16 rounded-full shadow-lg overflow-hidden soft-border">
-            <img src={avatar.src} alt="Avatar" class="w-full h-full object-cover floating-image" width="64" height="64" />
+      <a href="/" class="text-xl font-bold text-gray-800 dark:text-white">{siteName}</a>
+      {avatarImage && (
+        <div class="absolute left-1/2 transform -translate-x-1/2">
+          <div class="avatar-container">
+            <div class="w-16 h-16 rounded-full shadow-lg overflow-hidden soft-border">
+              <img src={avatarImage} alt={avatarAlt} class="w-full h-full object-cover floating-image" width="64" height="64" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <ul class="flex space-x-6 text-sm">
-        <li><a href="/posts" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-medium">Posts</a></li>
-        <li><a href="/repos" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-medium">Repos</a></li>
+        {menuItems.map((item) => (
+          <li><a href={item.link} class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-medium">{item.name}</a></li>
+        ))}
       </ul>
     </div>
   </div>
