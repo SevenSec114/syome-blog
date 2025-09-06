@@ -180,6 +180,23 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
         percentage: totalSize > 0 ? (bytes / totalSize) * 100 : 0
       }))
       .sort((a, b) => b.percentage - a.percentage);
+    
+    let otherLanguagesPercentage = 0;
+    const filteredLanguages = languages.filter(lang => {
+      if (lang.percentage >= 1) {
+        return true;
+      } else {
+        otherLanguagesPercentage += lang.percentage;
+        return false;
+      }
+    });
+    
+    if (otherLanguagesPercentage > 0) {
+      filteredLanguages.push({
+        name: "Other",
+        percentage: otherLanguagesPercentage
+      });
+    }
 
     const result = {
       contributions,
@@ -190,7 +207,7 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
       totalStars,
       totalPullRequests,
       totalIssues,
-      languages
+      languages: filteredLanguages
     };
 
 
