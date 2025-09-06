@@ -51,5 +51,5 @@ document.addEventListener("DOMContentLoaded", function () {
         content.classList.add("fade-in");
       });
     }
-  }, 100);
+  }, 1000);
 });
