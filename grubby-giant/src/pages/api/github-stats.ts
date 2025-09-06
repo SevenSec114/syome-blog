@@ -8,7 +8,7 @@ export const GET: APIRoute = async () => {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': 'public, max-age=900, s-maxage=900, stale-while-revalidate=300'
       }
     });
   } catch (error) {
@@ -35,8 +35,7 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
   const token = import.meta.env.GITHUB_TOKEN;
 
   if (!token) {
-    console.warn("No GitHub token found. Using mock data.");
-    return getMockData();
+    throw new Error("No GitHub token found.");
   }
 
   try {
@@ -99,15 +98,14 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
 
     return {
       contributions,
-      totalRepositories: repos.length,
+      totalRepositories: nonForkRepos.length,
       publicRepositories: publicRepos,
       privateRepositories: privateRepos,
       languages
     };
 
   } catch (error) {
-    console.error("Error fetching GitHub stats:", error);
-    return getMockData();
+    throw error;
   }
 }
 
@@ -153,26 +151,4 @@ async function getTotalContributions(token: string): Promise<number> {
   }
 
   return total;
-}
-
-function getMockData(): GitHubStats {
-  // 2025.08.02
-  return {
-    contributions: 806,
-    totalRepositories: 17,
-    publicRepositories: 1,
-    privateRepositories: 16,
-    languages: [
-      { name: "JavaScript", percentage: 45.3 },
-      { name: "Python", percentage: 27.2 },
-      { name: "TypeScript", percentage: 7.7 },
-      { name: "C#", percentage: 7.4 },
-      { name: "HTML", percentage: 5.3 },
-      { name: "Astro", percentage: 4.2 },
-      { name: "Kotlin", percentage: 2.0 },
-      { name: "SCSS", percentage: 0.4 },
-      { name: "CSS", percentage: 0.1 },
-      { name: "Batchfile", percentage: 0.0 }
-    ]
-  };
 }
