@@ -1,4 +1,4 @@
-import addCopyButtons from './code-copy.js';
+import addCopyButtons from './code-copy';
 
 function decodeHTML(html: string): string {
   const txt = document.createElement("textarea");
