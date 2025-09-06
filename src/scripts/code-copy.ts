@@ -1,7 +1,7 @@
 function addCopyButtons(): void {
   const codeBlocks = document.querySelectorAll('pre');
 
-  codeBlocks.forEach((block, index) => {
+  codeBlocks.forEach((block) => {
     const code = block.querySelector('code');
     if (!code) {
       return;
