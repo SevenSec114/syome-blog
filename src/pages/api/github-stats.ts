@@ -50,7 +50,7 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
   try {
     const contributions = await getTotalContributions(GITHUB_TOKEN, GITHUB_USERNAME);
 
-    const reposResponse = await fetch("https://api.github.com/user/repos?sort=updated&affiliation=owner,collaborator&per_page=100", {
+    const reposResponse = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100", {
       headers: {
         Authorization: `token ${GITHUB_TOKEN}`,
         "User-Agent": siteConfig.siteName
