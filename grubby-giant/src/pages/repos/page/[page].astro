@@ -16,7 +16,7 @@ export async function getStaticPaths() {
   if (totalPages === 0) {
     return [{
       params: { page: "1" },
-      props: { 
+      props: {
         repos: sortedRepos,
         currentPage: 1,
         totalPages: 1

@@ -3,6 +3,9 @@ interface GitHubStatsData {
   totalRepositories: number;
   publicRepositories: number;
   privateRepositories: number;
+  totalStars: number;
+  totalPullRequests: number;
+  totalIssues: number;
   languages: { name: string; percentage: number }[];
 }
 
@@ -12,7 +15,23 @@ function easeOutQuart(x: number): number {
   return 1 - Math.pow(1 - x, 4);
 }
 
-function animateNumber(element: HTMLElement, target: number, decimals: number = 0, duration: number = 1000, isPercentage: boolean = false) {
+function animateNumber(element: HTMLElement | null, target: number, decimals: number = 0, duration: number = 1000, isPercentage: boolean = false) {
+  // Check if element exists
+  if (!element) {
+    console.warn('Element not found for animation');
+    return;
+  }
+  
+  if (isNaN(target) || target === undefined || target === null) {
+    element.textContent = isPercentage ? '0.00%' : '0';
+    return;
+  }
+
+  if (target === 0) {
+    element.textContent = isPercentage ? '0.00%' : '0';
+    return;
+  }
+
   const startTime = performance.now();
   
   const animate = (currentTime: number) => {
@@ -40,7 +59,22 @@ function animateNumber(element: HTMLElement, target: number, decimals: number = 
   requestAnimationFrame(animate);
 }
 
-function animateProgressBar(element: HTMLElement, targetWidth: number, duration: number = 1000) {
+function animateProgressBar(element: HTMLElement | null, targetWidth: number, duration: number = 1000) {
+  if (!element) {
+    console.warn('Progress bar element not found for animation');
+    return;
+  }
+  
+  if (isNaN(targetWidth) || targetWidth === undefined || targetWidth === null) {
+    element.style.width = '0%';
+    return;
+  }
+
+  if (targetWidth === 0) {
+    element.style.width = '0%';
+    return;
+  }
+
   const startTime = performance.now();
   
   const animate = (currentTime: number) => {
@@ -77,19 +111,21 @@ function animateExtraLanguages() {
     const index = progressBar.dataset.index;
     
     const percentElement = document.getElementById(`extra-lang-percent-${index}`);
-    if (percentElement) {
-      animateNumber(percentElement, targetWidth, 2, 1000, true);
-    }
+    animateNumber(percentElement, targetWidth, 2, 1000, true);
     
     animateProgressBar(progressBar, targetWidth);
   });
 }
 
 function initLazyAnimations(githubStats: GitHubStatsData) {
-  animateNumber(document.getElementById('contributions-count')!, githubStats.contributions, 0);
-  animateNumber(document.getElementById('repositories-count')!, githubStats.totalRepositories, 0);
-  animateNumber(document.getElementById('public-repos-count')!, githubStats.publicRepositories, 0);
-  animateNumber(document.getElementById('private-repos-count')!, githubStats.privateRepositories, 0);
+  
+  animateNumber(document.getElementById('contributions-count'), githubStats.contributions || 0, 0);
+  animateNumber(document.getElementById('repositories-count'), githubStats.totalRepositories || 0, 0);
+  animateNumber(document.getElementById('public-repos-count'), githubStats.publicRepositories || 0, 0);
+  animateNumber(document.getElementById('private-repos-count'), githubStats.privateRepositories || 0, 0);
+  animateNumber(document.getElementById('stars-count'), githubStats.totalStars || 0, 0);
+  animateNumber(document.getElementById('prs-count'), githubStats.totalPullRequests || 0, 0);
+  animateNumber(document.getElementById('issues-count'), githubStats.totalIssues || 0, 0);
   
   document.querySelectorAll('.progress-bar').forEach((bar: Element) => {
     const progressBar = bar as HTMLElement;
@@ -97,9 +133,7 @@ function initLazyAnimations(githubStats: GitHubStatsData) {
     const index = progressBar.dataset.index;
     
     const percentElement = document.getElementById(`lang-percent-${index}`);
-    if (percentElement) {
-      animateNumber(percentElement, targetWidth, 2, 1000, true);
-    }
+    animateNumber(percentElement, targetWidth, 2, 1000, true);
     
     animateProgressBar(progressBar, targetWidth);
   });
@@ -132,6 +166,21 @@ export async function loadGitHubStats(): Promise<void> {
           </div>
         </div>
         
+        <div class="grid grid-cols-3 gap-4 mb-4">
+          <div class="text-center p-2 bg-blue-50 dark:bg-blue-900 rounded-lg">
+            <p class="text-xl font-bold text-blue-600 dark:text-blue-300" id="stars-count">0</p>
+            <p class="text-xs text-gray-600 dark:text-gray-300">Stars</p>
+          </div>
+          <div class="text-center p-2 bg-purple-50 dark:bg-purple-900 rounded-lg">
+            <p class="text-xl font-bold text-purple-600 dark:text-purple-300" id="prs-count">0</p>
+            <p class="text-xs text-gray-600 dark:text-gray-300">PRs</p>
+          </div>
+          <div class="text-center p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
+            <p class="text-xl font-bold text-yellow-600 dark:text-yellow-300" id="issues-count">0</p>
+            <p class="text-xs text-gray-600 dark:text-gray-300">Issues</p>
+          </div>
+        </div>
+        
         <div class="flex justify-between mb-4">
           <div class="text-center">
             <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
@@ -145,7 +194,7 @@ export async function loadGitHubStats(): Promise<void> {
           </div>
         </div>
         
-        ${githubStats.languages.length > 0 ? `
+        ${githubStats.languages && githubStats.languages.length > 0 ? `
           <div>
             <h4 class="font-medium text-gray-900 dark:text-white mb-2">Language Usage</h4>
             <div class="space-y-2" id="language-stats">
@@ -158,7 +207,7 @@ export async function loadGitHubStats(): Promise<void> {
                   <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                     <div 
                       class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full progress-bar" 
-                      data-target-width="${lang.percentage}"
+                      data-target-width="${lang.percentage || 0}"
                       data-index="${index}"
                       style="width: 0%"
                     ></div>
@@ -179,7 +228,7 @@ export async function loadGitHubStats(): Promise<void> {
                           <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                             <div 
                               class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full progress-bar-extra" 
-                              data-target-width="${lang.percentage}"
+                              data-target-width="${lang.percentage || 0}"
                               data-index="${index}"
                               style="width: 0%"
                             ></div>
@@ -208,7 +257,11 @@ export async function loadGitHubStats(): Promise<void> {
               ` : ''}
             </div>
           </div>
-        ` : ''}
+        ` : `
+          <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+            <p>No language data available</p>
+          </div>
+        `}
         
         <div class="mt-4 text-center">
           <a 
@@ -246,7 +299,7 @@ export async function loadGitHubStats(): Promise<void> {
       
       if (toggleButton && extraLanguages && toggleText && toggleArrow) {
         let isExpanded = false;
-        const remainingCount = githubStats.languages.length - 5;
+        const remainingCount = githubStats.languages ? githubStats.languages.length - 5 : 0;
         let hasAnimated = false;
         
         toggleButton.addEventListener('click', () => {
@@ -290,6 +343,7 @@ export async function loadGitHubStats(): Promise<void> {
         <div class="text-center py-8">
           <p class="text-red-600 dark:text-red-400">Failed to load GitHub statistics</p>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">The stats will be available when the API is accessible</p>
+          <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">Error: ${(error as Error).message}</p>
         </div>
       `;
       contentElement.classList.remove('hidden');
