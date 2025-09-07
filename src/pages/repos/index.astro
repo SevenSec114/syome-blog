@@ -21,11 +21,19 @@ import SearchBar from "../../components/SearchBar.astro";
       </a>
     </div>
     
-    <SearchBar placeholder="Search repos..." />
-    
-    <div id="repos-container"></div>
-    
-    <div id="pagination-container" class="mt-12 flex justify-center"></div>
+    <div class="flex flex-col md:flex-row gap-8">
+      <div class="md:w-1/4">
+        <div id="category-filter-container"></div>
+      </div>
+      
+      <div class="md:w-3/4">
+        <SearchBar placeholder="Search repos..." />
+        
+        <div id="repos-container"></div>
+        
+        <div id="pagination-container" class="mt-12 flex justify-center"></div>
+      </div>
+    </div>
   </div>
   
   <Footer />
@@ -37,11 +45,13 @@ import SearchBar from "../../components/SearchBar.astro";
   document.addEventListener('DOMContentLoaded', () => {
     const reposContainer = document.getElementById('repos-container');
     const paginationContainer = document.getElementById('pagination-container');
+    const categoryFilterContainer = document.getElementById('category-filter-container');
     const REPOS_PER_PAGE = 5;
     
     let sortedRepos: any[] = [];
-    let filteredRepos: string | any[] = [];
+    let filteredRepos: any[] = [];
     let searchQuery = '';
+    let currentCategory = '';
     let currentPage = 1;
     
     fetch('/api/repos')
@@ -50,6 +60,7 @@ import SearchBar from "../../components/SearchBar.astro";
         sortedRepos = data;
         filteredRepos = [...sortedRepos];
         loadPage(currentPage);
+        renderCategoryFilter();
       })
       .catch(error => {
         console.error('Error fetching repos:', error);
@@ -68,20 +79,27 @@ import SearchBar from "../../components/SearchBar.astro";
     });
 
     function filterRepos() {
-      if (!searchQuery) {
-        filteredRepos = [...sortedRepos];
-        return;
+      let result = [...sortedRepos];
+      
+      if (currentCategory) {
+        result = result.filter(repo => repo.category === currentCategory);
       }
       
-      filteredRepos = sortedRepos.filter(repo => {
-        const title = repo.title?.toLowerCase() || '';
-        const description = repo.description?.toLowerCase() || '';
-        const tags = repo.tags?.join(' ').toLowerCase() || '';
-        
-        return title.includes(searchQuery) || 
-               description.includes(searchQuery) || 
-               tags.includes(searchQuery);
-      });
+      if (searchQuery) {
+        result = result.filter(repo => {
+          const title = repo.title?.toLowerCase() || '';
+          const description = repo.description?.toLowerCase() || '';
+          const tags = repo.tags?.join(' ').toLowerCase() || '';
+          const category = repo.category?.toLowerCase() || '';
+          
+          return title.includes(searchQuery) || 
+                 description.includes(searchQuery) || 
+                 tags.includes(searchQuery) ||
+                 category.includes(searchQuery);
+        });
+      }
+      
+      filteredRepos = result;
     }
     
     function highlightText(text: string, query: string) {
@@ -121,7 +139,7 @@ import SearchBar from "../../components/SearchBar.astro";
         reposContainer.innerHTML = `
           <div class="text-center py-12">
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">No repos found</h2>
-            <p class="text-gray-600 dark:text-gray-400">Try different search terms.</p>
+            <p class="text-gray-600 dark:text-gray-400">Try different search terms or select a different category.</p>
           </div>
         `;
         return;
@@ -136,6 +154,13 @@ import SearchBar from "../../components/SearchBar.astro";
             return `
               <article class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 staggered-card transform hover:-translate-y-1" data-index="${index}">
                 <div class="p-6">
+                  <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    ${repo.category ? `
+                      <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded dark:bg-purple-900 dark:text-purple-300">
+                        ${repo.category}
+                      </span>
+                    ` : ''}
+                  </div>
                   <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
                     <a href="/repos/${repo.slug}" class="hover:underline">${highlightedTitle}</a>
                   </h2>
@@ -214,6 +239,80 @@ import SearchBar from "../../components/SearchBar.astro";
                 container.scrollIntoView({ behavior: 'smooth' });
               }
             }
+          }
+        });
+      });
+    }
+    
+    function renderCategoryFilter() {
+      if (!categoryFilterContainer) return;
+      
+      const categoryMap: Record<string, number> = {};
+      sortedRepos.forEach(repo => {
+        const category = repo.category || 'Default';
+        categoryMap[category] = (categoryMap[category] || 0) + 1;
+      });
+      
+      const categories = Object.entries(categoryMap).map(([name, count]) => ({
+        name,
+        count
+      }));
+      
+      const tempContainer = document.createElement('div');
+      const categoryFilterHtml = `
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Categories</h2>
+          <ul class="space-y-2">
+            <li>
+              <button 
+                class="w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                  currentCategory === '' 
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }"
+                data-category=""
+              >
+                All Repos
+                <span class="float-right">(${categories.reduce((sum, cat) => sum + cat.count, 0)})</span>
+              </button>
+            </li>
+            ${categories.map(category => `
+              <li>
+                <button 
+                  class="w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    currentCategory === category.name 
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                  }"
+                  data-category="${category.name}"
+                >
+                  ${category.name}
+                  <span class="float-right">(${category.count})</span>
+                </button>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+      
+      tempContainer.innerHTML = categoryFilterHtml;
+      categoryFilterContainer.appendChild(tempContainer);
+      
+      categoryFilterContainer.querySelectorAll('button[data-category]').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const target = e.target as HTMLButtonElement;
+          if (target) {
+            currentCategory = target.dataset.category || '';
+            filterRepos();
+            loadPage(1);
+            
+            categoryFilterContainer.querySelectorAll('button[data-category]').forEach(btn => {
+              btn.classList.remove('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-300');
+              btn.classList.add('text-gray-700', 'hover:bg-gray-100', 'dark:text-gray-300', 'dark:hover:bg-gray-700');
+            });
+            
+            target.classList.remove('text-gray-700', 'hover:bg-gray-100', 'dark:text-gray-300', 'dark:hover:bg-gray-700');
+            target.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-300');
           }
         });
       });

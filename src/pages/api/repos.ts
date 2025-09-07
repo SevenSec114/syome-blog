@@ -11,6 +11,7 @@ export const GET: APIRoute = async () => {
       title: repo.data.title,
       description: repo.data.description,
       tags: repo.data.tags || [],
+      category: repo.data.category || 'Default',
     }));
 
     return new Response(JSON.stringify(serializedRepos), {

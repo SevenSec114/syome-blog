@@ -12,6 +12,7 @@ export const GET: APIRoute = async () => {
       description: post.data.description,
       pubDate: post.data.pubDate.toISOString(),
       tags: post.data.tags || [],
+      category: post.data.category || 'Default',
     }));
 
     return new Response(JSON.stringify(serializedPosts), {
