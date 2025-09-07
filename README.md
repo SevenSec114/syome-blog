@@ -1,6 +1,6 @@
 # 🛠️ Syome Blog
 <p align="center">
-  <a href="https://syome.vercel.app/" target="_blank">
+  <a href="https://www.syome.top/" target="_blank">
     <img src="https://img.shields.io/badge/visit%20syome-view-88C0D0?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Website"/>
   </a>
 </p>
