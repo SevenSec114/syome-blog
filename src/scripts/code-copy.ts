@@ -1,4 +1,4 @@
-function addCopyButtons(): void {
+function addCopyButtons() {
   const codeBlocks = document.querySelectorAll('pre');
 
   codeBlocks.forEach((block) => {
@@ -9,7 +9,7 @@ function addCopyButtons(): void {
 
     const codeFirstLine = code.childNodes[0];
 
-    if (codeFirstLine && codeFirstLine.textContent && codeFirstLine.textContent.trim() === '') {
+    if (codeFirstLine?.textContent?.trim() === '') {
       code.removeChild(codeFirstLine);
       return;
     } else {
@@ -17,9 +17,7 @@ function addCopyButtons(): void {
       wrapper.style.position = 'relative';
       wrapper.style.display = 'block';
       
-      if (block.parentNode) {
-        block.parentNode.insertBefore(wrapper, block);
-      }
+      block.parentNode?.insertBefore(wrapper, block);
       wrapper.appendChild(block);
       
       const button = document.createElement('button');
@@ -36,17 +34,13 @@ function addCopyButtons(): void {
 
         navigator.clipboard.writeText(text).then(() => {
           setTimeout(() => {
-            if (button.textContent) {
-              button.textContent = originalText;
-            }
+            button.textContent = originalText;
           }, 2000);
         }).catch(err => {
           console.error('[addCopyButtons] Failed to copy text: ', err);
           button.textContent = 'Failed';
           setTimeout(() => {
-            if (button.textContent) {
-              button.textContent = originalText;
-            }
+            button.textContent = originalText;
           }, 2000);
         });
       });
@@ -58,7 +52,7 @@ function addCopyButtons(): void {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => addCopyButtons());
+  document.addEventListener('DOMContentLoaded', addCopyButtons);
 } else {
   addCopyButtons();
 }
