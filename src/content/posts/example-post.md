@@ -3,6 +3,7 @@ title: "Example Post"
 description: "Syome Blog post's template"
 pubDate: 2025-09-06
 tags: ["Blog Post", "Template", "Syome Blog"]
+category: "Template"
 ---
 
 ## Main Content
