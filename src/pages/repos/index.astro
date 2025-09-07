@@ -3,6 +3,18 @@ import "../../styles/list-page.css";
 import Layout from "../../layouts/Layout.astro";
 import Footer from "../../components/Footer.astro";
 import SearchBar from "../../components/SearchBar.astro";
+import { getCollection } from 'astro:content';
+
+const repos = await getCollection('repos');
+const sortedRepos = repos.sort((a, b) => b.slug.localeCompare(a.slug));
+
+const serializedRepos = sortedRepos.map(repo => ({
+  slug: repo.slug,
+  title: repo.data.title,
+  description: repo.data.description,
+  tags: repo.data.tags || [],
+  category: repo.data.category || 'Default',
+}));
 ---
 
 <Layout title="Public Repos">
@@ -41,33 +53,24 @@ import SearchBar from "../../components/SearchBar.astro";
 
 <script src="../../scripts/shared-layout"></script>
 
-<script>
+<script is:inline define:vars={{ serializedRepos }}>
   document.addEventListener('DOMContentLoaded', () => {
     const reposContainer = document.getElementById('repos-container');
     const paginationContainer = document.getElementById('pagination-container');
     const categoryFilterContainer = document.getElementById('category-filter-container');
     const REPOS_PER_PAGE = 5;
     
-    let sortedRepos: any[] = [];
-    let filteredRepos: any[] = [];
+    let sortedRepos = serializedRepos;
+    let filteredRepos = [...sortedRepos];
     let searchQuery = '';
     let currentCategory = '';
     let currentPage = 1;
     
-    fetch('/api/repos')
-      .then(response => response.json())
-      .then((data) => {
-        sortedRepos = data;
-        filteredRepos = [...sortedRepos];
-        loadPage(currentPage);
-        renderCategoryFilter();
-      })
-      .catch(error => {
-        console.error('Error fetching repos:', error);
-      });
+    loadPage(currentPage);
+    renderCategoryFilter();
     
     document.addEventListener('search-input', (e) => {
-      const event = e as CustomEvent;
+      const event = e;
       searchQuery = event.detail.value.toLowerCase();
       filterRepos();
       loadPage(1);
@@ -102,18 +105,18 @@ import SearchBar from "../../components/SearchBar.astro";
       filteredRepos = result;
     }
     
-    function highlightText(text: string, query: string) {
+    function highlightText(text, query) {
       if (!query) return text;
       
       const regex = new RegExp(`(${query})`, 'gi');
       return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 text-gray-900 dark:text-white">$1</mark>');
     }
     
-    function loadPage(page: number) {
+    function loadPage(page) {
       currentPage = page;
       const startIndex = (page - 1) * REPOS_PER_PAGE;
       const endIndex = startIndex + REPOS_PER_PAGE;
-      const paginatedRepos = filteredRepos.slice(startIndex, endIndex) as any[];
+      const paginatedRepos = filteredRepos.slice(startIndex, endIndex);
       
       renderRepos(paginatedRepos);
       renderPagination(page, Math.ceil(filteredRepos.length / REPOS_PER_PAGE) || 1);
@@ -125,14 +128,14 @@ import SearchBar from "../../components/SearchBar.astro";
     
     function applyCardAnimations() {
       const cards = document.querySelectorAll('.staggered-card');
-      cards.forEach((card: Element, index: number) => {
+      cards.forEach((card, index) => {
         setTimeout(() => {
           card.classList.add('card-ready');
         }, index * 150);
       });
     }
     
-    function renderRepos(repos: any[]) {
+    function renderRepos(repos) {
       if (!reposContainer) return;
       
       if (repos.length === 0) {
@@ -147,28 +150,28 @@ import SearchBar from "../../components/SearchBar.astro";
       
       reposContainer.innerHTML = `
         <div class="grid grid-cols-1 gap-6 cards-container">
-          ${repos.map((/** @type {any} */ repo: any, /** @type {number} */ index: number) => {
+          ${repos.map((repo, index) => {
             const highlightedTitle = highlightText(repo.title, searchQuery);
             const highlightedDescription = highlightText(repo.description, searchQuery);
             
             return `
               <article class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 staggered-card transform hover:-translate-y-1" data-index="${index}">
                 <div class="p-6">
-                  <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                      <a href="/repos/${repo.slug}" class="hover:underline">${highlightedTitle}</a>
+                    </h2>
                     ${repo.category ? `
                       <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded dark:bg-purple-900 dark:text-purple-300">
                         ${repo.category}
                       </span>
                     ` : ''}
                   </div>
-                  <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
-                    <a href="/repos/${repo.slug}" class="hover:underline">${highlightedTitle}</a>
-                  </h2>
                   <p class="text-gray-600 dark:text-gray-400 mb-4">
                     ${highlightedDescription}
                   </p>
                   <div class="flex flex-wrap gap-2">
-                    ${repo.tags?.map((/** @type {string} */ tag: string) => {
+                    ${repo.tags?.map((tag) => {
                       const highlightedTag = highlightText(tag, searchQuery);
                       return `
                         <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded dark:bg-blue-900 dark:text-blue-300">${highlightedTag}</span>
@@ -183,7 +186,7 @@ import SearchBar from "../../components/SearchBar.astro";
       `;
     }
     
-    function renderPagination(currentPage: number, totalPages: number) {
+    function renderPagination(currentPage, totalPages) {
       if (!paginationContainer) return;
       
       let paginationHTML = `
@@ -228,10 +231,10 @@ import SearchBar from "../../components/SearchBar.astro";
       paginationContainer.innerHTML = paginationHTML;
       
       document.querySelectorAll('#pagination-container button').forEach(button => {
-        button.addEventListener('click', (e: Event) => {
-          const target = e.target as HTMLButtonElement;
+        button.addEventListener('click', (e) => {
+          const target = e.target;
           if (target) {
-            const page = parseInt(target.dataset.page || '');
+            const page = parseInt(target.dataset.page || '1');
             if (page) {
               loadPage(page);
               const container = document.querySelector('#repos-container');
@@ -247,7 +250,7 @@ import SearchBar from "../../components/SearchBar.astro";
     function renderCategoryFilter() {
       if (!categoryFilterContainer) return;
       
-      const categoryMap: Record<string, number> = {};
+      const categoryMap = {};
       sortedRepos.forEach(repo => {
         const category = repo.category || 'Default';
         categoryMap[category] = (categoryMap[category] || 0) + 1;
@@ -258,8 +261,7 @@ import SearchBar from "../../components/SearchBar.astro";
         count
       }));
       
-      const tempContainer = document.createElement('div');
-      const categoryFilterHtml = `
+      categoryFilterContainer.innerHTML = `
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-6">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Categories</h2>
           <ul class="space-y-2">
@@ -295,12 +297,9 @@ import SearchBar from "../../components/SearchBar.astro";
         </div>
       `;
       
-      tempContainer.innerHTML = categoryFilterHtml;
-      categoryFilterContainer.appendChild(tempContainer);
-      
       categoryFilterContainer.querySelectorAll('button[data-category]').forEach(button => {
         button.addEventListener('click', (e) => {
-          const target = e.target as HTMLButtonElement;
+          const target = e.target;
           if (target) {
             currentCategory = target.dataset.category || '';
             filterRepos();
