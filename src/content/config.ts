@@ -6,6 +6,7 @@ const posts = defineCollection({
     description: z.string(),
     pubDate: z.date(),
     tags: z.array(z.string()).optional(),
+    category: z.string().optional(),
   }),
 });
 
@@ -16,6 +17,7 @@ const repos = defineCollection({
     tags: z.array(z.string()).optional(),
     repoUrl: z.string().optional(),
     languages: z.array(z.string()).optional(),
+    category: z.string().optional(),
   }),
 });
 
