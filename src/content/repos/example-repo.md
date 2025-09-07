@@ -10,6 +10,8 @@ category: "Template"
 ## Main Content
 Here you can write your main content of your repo description, using markdown.
 
+It is a good idea to write a documentation or short description of your repo.
+
 ---
 
-Have a nice blog experience :)
+Have a nice blog experience :D

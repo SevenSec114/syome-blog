@@ -23,17 +23,12 @@ To get this project up and running locally:
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/SevenSec114/SyomeBlog.git
-   ```
-
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Start the development server:
+2. Start the development server:
    ```bash
    npm run dev
    ```
