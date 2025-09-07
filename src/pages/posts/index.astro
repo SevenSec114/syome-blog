@@ -3,6 +3,19 @@ import "../../styles/list-page.css";
 import Layout from "../../layouts/Layout.astro";
 import Footer from "../../components/Footer.astro";
 import SearchBar from "../../components/SearchBar.astro";
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('posts');
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const serializedPosts = sortedPosts.map(post => ({
+  slug: post.slug,
+  title: post.data.title,
+  description: post.data.description,
+  pubDate: post.data.pubDate.toISOString(),
+  tags: post.data.tags || [],
+  category: post.data.category || 'Default',
+}));
 ---
 
 <Layout title="Blog Posts">
@@ -21,42 +34,43 @@ import SearchBar from "../../components/SearchBar.astro";
       </a>
     </div>
     
-    <SearchBar placeholder="Search posts..." />
-    
-    <div id="blog-posts-container"></div>
-    
-    <div id="pagination-container" class="mt-12 flex justify-center"></div>
+    <div class="flex flex-col md:flex-row gap-8">
+      <div class="md:w-1/4">
+        <div id="category-filter-container"></div>
+      </div>
+      
+      <div class="md:w-3/4">
+        <SearchBar placeholder="Search posts..." />
+        
+        <div id="blog-posts-container"></div>
+        
+        <div id="pagination-container" class="mt-12 flex justify-center"></div>
+      </div>
+    </div>
   </div>
   
   <Footer />
 </Layout>
 
 <script src="../../scripts/shared-layout"></script>
-
-<script>
+<script is:inline define:vars={{ serializedPosts }}>
   document.addEventListener('DOMContentLoaded', () => {
     const blogPostsContainer = document.getElementById('blog-posts-container');
     const paginationContainer = document.getElementById('pagination-container');
+    const categoryFilterContainer = document.getElementById('category-filter-container');
     const POSTS_PER_PAGE = 5;
     
-    let sortedPosts: any[] = [];
-    let filteredPosts: any[] = [];
+    let sortedPosts = serializedPosts;
+    let filteredPosts = [...serializedPosts];
     let searchQuery = '';
+    let currentCategory = '';
     let currentPage = 1;
     
-    fetch('/api/posts')
-      .then(response => response.json())
-      .then((data: any[]) => {
-        sortedPosts = data;
-        filteredPosts = [...sortedPosts];
-        loadPage(currentPage);
-      })
-      .catch(error => {
-        console.error('Error fetching posts:', error);
-      });
+    loadPage(currentPage);
+    renderCategoryFilter();
     
     document.addEventListener('search-input', (e) => {
-      const event = e as CustomEvent;
+      const event = e;
       searchQuery = event.detail.value.toLowerCase();
       filterPosts();
       loadPage(1);
@@ -68,30 +82,37 @@ import SearchBar from "../../components/SearchBar.astro";
     });
     
     function filterPosts() {
-      if (!searchQuery) {
-        filteredPosts = [...sortedPosts];
-        return;
+      let result = [...sortedPosts];
+      
+      if (currentCategory) {
+        result = result.filter(post => post.category === currentCategory);
       }
       
-      filteredPosts = sortedPosts.filter(post => {
-        const title = post.title?.toLowerCase() || '';
-        const description = post.description?.toLowerCase() || '';
-        const tags = post.tags?.join(' ').toLowerCase() || '';
-        
-        return title.includes(searchQuery) || 
-        description.includes(searchQuery) || 
-        tags.includes(searchQuery);
-      });
+      if (searchQuery) {
+        result = result.filter(post => {
+          const title = post.title?.toLowerCase() || '';
+          const description = post.description?.toLowerCase() || '';
+          const tags = post.tags?.join(' ').toLowerCase() || '';
+          const category = post.category?.toLowerCase() || '';
+          
+          return title.includes(searchQuery) || 
+                 description.includes(searchQuery) || 
+                 tags.includes(searchQuery) ||
+                 category.includes(searchQuery);
+        });
+      }
+      
+      filteredPosts = result;
     }
     
-    function highlightText(text: string, query: string) {
+    function highlightText(text, query) {
       if (!query) return text;
       
       const regex = new RegExp(`(${query})`, 'gi');
       return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 text-gray-900 dark:text-white">$1</mark>');
     }
     
-    function loadPage(page: number) {
+    function loadPage(page) {
       currentPage = page;
       const startIndex = (page - 1) * POSTS_PER_PAGE;
       const endIndex = startIndex + POSTS_PER_PAGE;
@@ -107,21 +128,21 @@ import SearchBar from "../../components/SearchBar.astro";
     
     function applyCardAnimations() {
       const cards = document.querySelectorAll('.staggered-card');
-      cards.forEach((card: Element, index: number) => {
+      cards.forEach((card, index) => {
         setTimeout(() => {
           card.classList.add('card-ready');
         }, index * 150);
       });
     }
     
-    function renderPosts(posts: any[]) {
+    function renderPosts(posts) {
       if (!blogPostsContainer) return;
       
       if (posts.length === 0) {
         blogPostsContainer.innerHTML = `
           <div class="text-center py-12">
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">No posts found</h2>
-            <p class="text-gray-600 dark:text-gray-400">Try different search terms.</p>
+            <p class="text-gray-600 dark:text-gray-400">Try different search terms or select a different category.</p>
           </div>
         `;
         return;
@@ -129,14 +150,14 @@ import SearchBar from "../../components/SearchBar.astro";
       
       blogPostsContainer.innerHTML = `
         <div class="grid grid-cols-1 gap-6 cards-container">
-          ${posts.map((post: any, index: number) => {
+          ${posts.map((post, index) => {
             const highlightedTitle = highlightText(post.title, searchQuery);
             const highlightedDescription = highlightText(post.description, searchQuery);
             
             return `
               <article class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 staggered-card transform hover:-translate-y-1" data-index="${index}">
                 <div class="p-6">
-                  <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3 justify-between">
                     <time datetime="${post.pubDate}">
                       ${new Date(post.pubDate).toLocaleDateString('en-US', { 
                         year: 'numeric', 
@@ -144,6 +165,11 @@ import SearchBar from "../../components/SearchBar.astro";
                         day: 'numeric' 
                       })}
                     </time>
+                    ${post.category ? `
+                      <span class="ml-3 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded dark:bg-purple-900 dark:text-purple-300">
+                        ${post.category}
+                      </span>
+                    ` : ''}
                   </div>
                   <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
                     <a href="/posts/${post.slug}" class="hover:underline">${highlightedTitle}</a>
@@ -152,7 +178,7 @@ import SearchBar from "../../components/SearchBar.astro";
                     ${highlightedDescription}
                   </p>
                   <div class="flex flex-wrap gap-2">
-                    ${post.tags?.map((tag: string) => {
+                    ${post.tags?.map((tag) => {
                       const highlightedTag = highlightText(tag, searchQuery);
                       return `
                         <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded dark:bg-blue-900 dark:text-blue-300">${highlightedTag}</span>
@@ -167,7 +193,7 @@ import SearchBar from "../../components/SearchBar.astro";
       `;
     }
     
-    function renderPagination(currentPage: number, totalPages: number) {
+    function renderPagination(currentPage, totalPages) {
       if (!paginationContainer) return;
       
       let paginationHTML = `
@@ -213,7 +239,7 @@ import SearchBar from "../../components/SearchBar.astro";
       
       document.querySelectorAll('#pagination-container button').forEach(button => {
         button.addEventListener('click', (e) => {
-          const target = e.target as HTMLButtonElement;
+          const target = e.target;
           if (target) {
             const page = parseInt(target.dataset.page || '1');
             if (page) {
@@ -223,6 +249,80 @@ import SearchBar from "../../components/SearchBar.astro";
                 container.scrollIntoView({ behavior: 'smooth' });
               }
             }
+          }
+        });
+      });
+    }
+    
+    function renderCategoryFilter() {
+      if (!categoryFilterContainer) return;
+      
+      const categoryMap = {};
+      sortedPosts.forEach(post => {
+        const category = post.category || 'Default';
+        categoryMap[category] = (categoryMap[category] || 0) + 1;
+      });
+      
+      const categories = Object.entries(categoryMap).map(([name, count]) => ({
+        name,
+        count
+      }));
+      
+      const tempContainer = document.createElement('div');
+      const categoryFilterHtml = `
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Categories</h2>
+          <ul class="space-y-2">
+            <li>
+              <button 
+                class="w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                  currentCategory === '' 
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }"
+                data-category=""
+              >
+                All Posts
+                <span class="float-right">(${categories.reduce((sum, cat) => sum + cat.count, 0)})</span>
+              </button>
+            </li>
+            ${categories.map(category => `
+              <li>
+                <button 
+                  class="w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    currentCategory === category.name 
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                  }"
+                  data-category="${category.name}"
+                >
+                  ${category.name}
+                  <span class="float-right">(${category.count})</span>
+                </button>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+      
+      tempContainer.innerHTML = categoryFilterHtml;
+      categoryFilterContainer.appendChild(tempContainer);
+      
+      categoryFilterContainer.querySelectorAll('button[data-category]').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const target = e.target;
+          if (target) {
+            currentCategory = target.dataset.category || '';
+            filterPosts();
+            loadPage(1);
+            
+            categoryFilterContainer.querySelectorAll('button[data-category]').forEach(btn => {
+              btn.classList.remove('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-300');
+              btn.classList.add('text-gray-700', 'hover:bg-gray-100', 'dark:text-gray-300', 'dark:hover:bg-gray-700');
+            });
+            
+            target.classList.remove('text-gray-700', 'hover:bg-gray-100', 'dark:text-gray-300', 'dark:hover:bg-gray-700');
+            target.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-300');
           }
         });
       });

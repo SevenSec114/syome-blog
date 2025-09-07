@@ -3,7 +3,7 @@ import "../styles/bubbles.css";
 import "../styles/page.css";
 import MarkdownRenderer from '../components/MarkdownRenderer.astro';
 import Footer from '../components/Footer.astro';
-import siteConfig from '../content/site-config';
+import siteConfig from '../custom/site-config';
 const { title, description, pubDate, content } = Astro.props;
 ---
 
@@ -74,6 +74,6 @@ const { title, description, pubDate, content } = Astro.props;
 		
 		<Footer />
 		
-		<script src="/src/scripts/shared-layout.ts"></script>
+		<script src="/src/scripts/shared-layout"></script>
 	</body>
 </html>

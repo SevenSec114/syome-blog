@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import siteConfig from '../../content/site-config';
+import siteConfig from '../../custom/site-config';
 
 const GITHUB_USERNAME = import.meta.env.PUBLIC_GITHUB_USERNAME;
 const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN;
