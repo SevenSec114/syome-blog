@@ -9,14 +9,13 @@ category: "Template"
 ## Main Content
 Here you can write your main content of your post, using markdown.
 
-## Feature
+## Features
 In addition to markdown, here are some features you can use.
 
 ### Code Fence with Copy Button
 You can simply write a code fence, there will be a copy button by default.
 
 ````markdown
-
 ```python
 pring("Hello World")
 ```
@@ -31,7 +30,6 @@ pring("Hello World")
 If you want to hide the copy button, you can make the first line of the code empty(pricisely `\n`).
 
 ````markdown
-
 ```python
 
 pring("Hello World")
@@ -44,6 +42,16 @@ And the result will be:
 
 pring("Hello World")
 ```
+
+### Image Injection with Figcaption
+You can simply add alt text using `![]()` syntax and it will automatically generate a `<figcaption>` under the image.
+
+```markdown
+![alt text](/path/to/img)
+```
+
+And the result will be:
+![alt text](../../assets/astro.svg)
 
 ---
 

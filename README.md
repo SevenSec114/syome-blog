@@ -116,7 +116,8 @@ All blog posts and repos are written in Markdown and stored in `src/content/`. E
 - `repoUrl` - The github URL of the repo
 
 > [!TIP]
-> While typing fenced code block, keep the first line of the code block empty can `hide the copy button`
+> 1. While typing fenced code block, keep the first line of the code block empty can `hide the copy button`
+> 2. About `![]()` syntax for images injection, fill the alt text in `[]` will automatically generate a `<figcaption>` under the image.
 
 ### Styling
 
