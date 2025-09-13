@@ -28,7 +28,7 @@ To get this project up and running locally:
    npm install
    ```
 
-2. Start the development server:
+2. Run the development server:
    ```bash
    npm run dev
    ```
@@ -101,6 +101,24 @@ The blog uses a custom Markdown rendering system with the following features:
 1. **Tailwind CSS Typography Plugin** - Provides beautiful default styles for all Markdown elements
 2. **Enhanced Markdown Renderer Component** - Custom Astro component with additional styling options
 3. **Custom Processor** - Built with the remark/rehype ecosystem for maximum control
+
+### GitHub Stats
+
+This blog includes a GitHub stats feature that displays various statistics about your GitHub activity. The stats are fetched via GitHub API and include:
+
+1. **Contributions** - Total contribution count across all years
+2. **Repositories** - Breakdown of your repositories:
+   - Public repositories you own
+   - Private repositories you own
+   - Repositories you collaborate on (where you're the owner)
+3. **Stars** - Total stars across all your non-fork repositories
+4. **Pull Requests** - Total pull requests you've created
+5. **Issues** - Total issues you've created
+6. **Languages** - Breakdown of programming languages used in your repositories
+
+The GitHub stats are fetched from the client side by making a request to `/api/github-stats`, which is an Astro API route that communicates with GitHub's GraphQL and REST APIs.
+
+Note that the repository counts only include `non-fork repositories` you own or collaborate on. The current implementation does not include repositories you've contributed to but don't own or collaborate on, which provides a more focused view of your direct work rather than all contributions.
 
 ## 🛠️ Post Guidelines
 

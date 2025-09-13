@@ -7,7 +7,7 @@ const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN;
 export const GET: APIRoute = async () => {
   try {
     const stats = await fetchGitHubStats();
-    
+
     return new Response(JSON.stringify(stats), {
       status: 200,
       headers: {
@@ -16,7 +16,7 @@ export const GET: APIRoute = async () => {
       }
     });
   } catch (error) {
-    
+
     return new Response(JSON.stringify({ error: 'Failed to fetch GitHub stats' }), {
       status: 500,
       headers: {
@@ -50,153 +50,123 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
   try {
     const contributions = await getTotalContributions(GITHUB_TOKEN, GITHUB_USERNAME);
 
-    const reposResponse = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100", {
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": siteConfig.siteName
+    const query = `
+      query($login: String!, $after: String) {
+        user(login: $login) {
+          repositories(first: 100, after: $after, orderBy: {field: UPDATED_AT, direction: DESC}) {
+            totalCount
+            pageInfo { hasNextPage endCursor }
+            nodes {
+              name
+              owner { login }
+              isFork
+              isPrivate
+              stargazerCount
+              languages(first: 10) {
+                edges { size node { name } }
+              }
+            }
+          }
+        }
       }
-    });
+    `;
 
-    if (!reposResponse.ok) {
-      throw new Error(`GitHub REST error: ${reposResponse.status}`);
+    const headers = {
+      Authorization: `Bearer ${GITHUB_TOKEN}`,
+      'Content-Type': 'application/json',
+      'User-Agent': siteConfig.siteName
+    };
+
+    let repos: any[] = [];
+    let after: string | null = null;
+    let hasNext = true;
+    while (hasNext) {
+      const res: Response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query, variables: { login: GITHUB_USERNAME, after } })
+      });
+
+      if (!res.ok) {
+        throw new Error(`GitHub GraphQL error: ${res.status}`);
+      }
+
+      const data: any = await res.json();
+      if (data.errors) {
+        throw new Error(`GitHub GraphQL error: ${JSON.stringify(data.errors)}`);
+      }
+
+      const reposBlock: any = data.data.user?.repositories;
+      if (!reposBlock) break;
+
+      repos = repos.concat(reposBlock.nodes || []);
+      hasNext = reposBlock.pageInfo?.hasNextPage;
+      after = reposBlock.pageInfo?.endCursor || null;
+      if (repos.length >= 300) break;
     }
 
-    const repos = await reposResponse.json();
-
-    const nonForkRepos = repos.filter((repo: any) => !repo.fork);
+    const nonForkRepos = repos.filter(r => !r.isFork);
 
     const ownerRepos = nonForkRepos.filter((repo: any) => repo.owner.login === GITHUB_USERNAME);
     const collaboratorRepos = nonForkRepos.filter((repo: any) => repo.owner.login !== GITHUB_USERNAME);
-    
-    const publicRepos = ownerRepos.filter((repo: any) => !repo.private).length;
-    const privateRepos = ownerRepos.filter((repo: any) => repo.private).length;
+
+    const publicRepos = ownerRepos.filter((repo: any) => !repo.isPrivate).length;
+    const privateRepos = ownerRepos.filter((repo: any) => repo.isPrivate).length;
     const collaboratorRepoCount = collaboratorRepos.length;
-    
-    const totalStars = nonForkRepos.reduce((sum: number, repo: any) => {
-      const stars = repo.stargazers_count || 0;
-      return sum + stars;
-    }, 0);
-    
+
+    const totalStars = nonForkRepos.reduce((sum: number, repo: any) => sum + (repo.stargazerCount || 0), 0);
+
     let totalPullRequests = 0;
     let totalIssues = 0;
-    
-    const repoDetailsPromises = nonForkRepos.map(async (repo: any) => {
-      try {
-        const prsResponse = await fetch(`${repo.url}/pulls?state=all&per_page=1`, {
-          headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            "User-Agent": siteConfig.siteName
-          }
-        });
-        
-        if (prsResponse.ok) {
-          const prLinkHeader = prsResponse.headers.get('Link');
-          if (prLinkHeader) {
-            const lastPageMatch = prLinkHeader.match(/page=(\d+)>; rel="last"/);
-            if (lastPageMatch) {
-              const prCount = parseInt(lastPageMatch[1]) || 0;
-              totalPullRequests += prCount;
-            } else {
-              const prsData = await prsResponse.json();
-              const prCount = Array.isArray(prsData) ? prsData.length : 0;
-              totalPullRequests += prCount;
-            }
-          } else {
-            const prsData = await prsResponse.json();
-            const prCount = Array.isArray(prsData) ? prsData.length : 0;
-            totalPullRequests += prCount;
-          }
-        } else {
-        }
-      } catch (error) {
+    try {
+      const [prRes, issueRes] = await Promise.all([
+        fetch(`https://api.github.com/search/issues?q=type:pr+author:${GITHUB_USERNAME}&per_page=1`, { headers: { Authorization: `token ${GITHUB_TOKEN}`, 'User-Agent': siteConfig.siteName } }),
+        fetch(`https://api.github.com/search/issues?q=type:issue+author:${GITHUB_USERNAME}&per_page=1`, { headers: { Authorization: `token ${GITHUB_TOKEN}`, 'User-Agent': siteConfig.siteName } })
+      ]);
+
+      if (prRes.ok) {
+        const prData = await prRes.json();
+        totalPullRequests = prData.total_count || 0;
+      } else {
+        console.warn(`Failed to fetch PRs: ${prRes.status}`);
       }
-      
-      try {
-        const issuesResponse = await fetch(`${repo.url}/issues?state=all&per_page=1`, {
-          headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            "User-Agent": siteConfig.siteName
-          }
-        });
-        
-        if (issuesResponse.ok) {
-          const issuesLinkHeader = issuesResponse.headers.get('Link');
-          if (issuesLinkHeader) {
-            const lastPageMatch = issuesLinkHeader.match(/page=(\d+)>; rel="last"/);
-            if (lastPageMatch) {
-              const issueCount = parseInt(lastPageMatch[1]) || 0;
-              totalIssues += issueCount;
-            } else {
-              const issuesData = await issuesResponse.json();
-              const issueCount = Array.isArray(issuesData) ? issuesData.length : 0;
-              totalIssues += issueCount;
-            }
-          } else {
-            const issuesData = await issuesResponse.json();
-            const issueCount = Array.isArray(issuesData) ? issuesData.length : 0;
-            totalIssues += issueCount;
-          }
-        } else {
-        }
-      } catch (error) {
+
+      if (issueRes.ok) {
+        const issueData = await issueRes.json();
+        totalIssues = issueData.total_count || 0;
+      } else {
+        console.warn(`Failed to fetch issues: ${issueRes.status}`);
       }
-    });
-    
-    await Promise.all(repoDetailsPromises);
+    } catch (error) {
+      console.error(`Error fetching PR/issue counts:`, error);
+    }
 
     const languageStats: { [key: string]: number } = {};
     let totalSize = 0;
 
-    const languagePromises = nonForkRepos.map(async (repo: any) => {
-      const langResponse = await fetch(repo.languages_url, {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": siteConfig.siteName
-        }
-      });
-
-      if (langResponse.ok) {
-        const languages = await langResponse.json();
-        return languages;
-      }
-      return {};
-    });
-
-    const repoLanguages = await Promise.all(languagePromises);
-
-    repoLanguages.forEach((langs) => {
-      Object.entries(langs).forEach(([language, bytes]) => {
-        if (!languageStats[language]) {
-          languageStats[language] = 0;
-        }
-        languageStats[language] += bytes as number;
-        totalSize += bytes as number;
+    nonForkRepos.forEach((repo: any) => {
+      const langEdges = repo.languages?.edges || [];
+      langEdges.forEach((edge: any) => {
+        const name = edge.node?.name;
+        const size = edge.size || 0;
+        if (!name) return;
+        languageStats[name] = (languageStats[name] || 0) + size;
+        totalSize += size;
       });
     });
 
     const languages = Object.entries(languageStats)
-      .map(([name, bytes]) => ({
-        name,
-        percentage: totalSize > 0 ? (bytes / totalSize) * 100 : 0
-      }))
+      .map(([name, bytes]) => ({ name, percentage: totalSize > 0 ? (bytes / totalSize) * 100 : 0 }))
       .sort((a, b) => b.percentage - a.percentage);
-    
+
     let otherLanguagesPercentage = 0;
     const filteredLanguages = languages.filter(lang => {
-      if (lang.percentage >= 1) {
-        return true;
-      } else {
-        otherLanguagesPercentage += lang.percentage;
-        return false;
-      }
+      if (lang.percentage >= 1) return true;
+      otherLanguagesPercentage += lang.percentage;
+      return false;
     });
-    
-    if (otherLanguagesPercentage > 0) {
-      filteredLanguages.push({
-        name: "Other",
-        percentage: otherLanguagesPercentage
-      });
-    }
+
+    if (otherLanguagesPercentage > 0) filteredLanguages.push({ name: 'Other', percentage: otherLanguagesPercentage });
 
     const result = {
       contributions,
@@ -210,7 +180,6 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
       languages: filteredLanguages
     };
 
-
     return result;
 
   } catch (error) {
@@ -221,15 +190,15 @@ export async function fetchGitHubStats(): Promise<GitHubStats> {
 async function getTotalContributions(token: string, username: string): Promise<number> {
   const currentYear = new Date().getFullYear();
   const startYear = 2008; // GitHub was founded in 2008 lol
-  
+
   let contributionsQueryFields = '';
-  
+
   for (let year = startYear; year <= currentYear; year++) {
     const from = `${year}-01-01T00:00:00Z`;
-    const to = year === currentYear 
+    const to = year === currentYear
       ? new Date().toISOString()
       : `${year}-12-31T23:59:59Z`;
-      
+
     contributionsQueryFields += `
         contributions${year}: contributionsCollection(from: "${from}", to: "${to}") {
           contributionCalendar {
@@ -238,7 +207,7 @@ async function getTotalContributions(token: string, username: string): Promise<n
         }
     `;
   }
-  
+
   const query = `
     query($username: String!) {
       user(login: $username) {
@@ -254,7 +223,7 @@ async function getTotalContributions(token: string, username: string): Promise<n
       "Content-Type": "application/json",
       "User-Agent": siteConfig.siteName
     },
-    body: JSON.stringify({ 
+    body: JSON.stringify({
       query,
       variables: { username }
     })
@@ -265,17 +234,17 @@ async function getTotalContributions(token: string, username: string): Promise<n
   }
 
   const result = await response.json();
-  
+
   if (result.errors) {
     throw new Error(`GitHub GraphQL error: ${JSON.stringify(result.errors)}`);
   }
-  
+
   let total = 0;
   for (let year = startYear; year <= currentYear; year++) {
     if (result.data.user[`contributions${year}`]) {
       total += result.data.user[`contributions${year}`].contributionCalendar.totalContributions;
     }
   }
-  
+
   return total;
 }
