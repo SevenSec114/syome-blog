@@ -96,11 +96,14 @@ function animateProgressBar(element: HTMLElement | null, targetWidth: number, du
 
 function isInViewport(element: HTMLElement): boolean {
   const rect = element.getBoundingClientRect();
+  const windowHeight = (window.innerHeight || document.documentElement.clientHeight);
+  const windowWidth = (window.innerWidth || document.documentElement.clientWidth);
+  
   return (
-    rect.top >= 0 &&
-    rect.left >= 0 &&
-    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    rect.top <= windowHeight * 0.7 &&
+    rect.left <= windowWidth * 0.7 &&
+    rect.bottom >= windowHeight * 0.3 &&
+    rect.right >= windowWidth * 0.3
   );
 }
 
