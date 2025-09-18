@@ -41,14 +41,16 @@ function animateNumber(element: HTMLElement | null, target: number, decimals: nu
     const current = target * easedProgress;
     
     if (progress < 1) {
-      const formattedNumber = Number(current).toLocaleString(undefined, {
+      const displayValue = Math.max(0, current);
+      const formattedNumber = Number(displayValue).toLocaleString(undefined, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
       });
       element.textContent = isPercentage ? formattedNumber + '%' : formattedNumber;
       requestAnimationFrame(animate);
     } else {
-      const formattedNumber = Number(target).toLocaleString(undefined, {
+      const displayValue = Math.max(0, target);
+      const formattedNumber = Number(displayValue).toLocaleString(undefined, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
       });
