@@ -36,3 +36,15 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+pre {
+  white-space: pre;
+  overflow-x: auto;
+}
+
+pre code, .prose pre code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  display: block;
+}
