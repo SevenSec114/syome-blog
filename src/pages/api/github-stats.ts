@@ -5,6 +5,16 @@ const GITHUB_USERNAME = import.meta.env.PUBLIC_GITHUB_USERNAME;
 const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN;
 
 export const GET: APIRoute = async () => {
+  if (!GITHUB_USERNAME || !GITHUB_TOKEN) {
+    console.warn('\x1b[33m%s\x1b[0m', "[WARN]: No GitHub username or token found.\nMay you forget to add it to your .env file?");
+    return new Response(JSON.stringify({ error: 'No GitHub username or token found.' }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
   try {
     const stats = await fetchGitHubStats();
 
