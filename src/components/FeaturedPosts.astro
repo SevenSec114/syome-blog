@@ -2,12 +2,24 @@
 import { getCollection } from 'astro:content';
 
 const posts = await getCollection('posts');
-const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const pinnedPosts = posts.filter(post => post.data.pin);
+if (pinnedPosts.length > 1) {
+  console.warn('\x1b[33m%s\x1b[0m', `[WARNING]: ${pinnedPosts.length} posts are pinned. Only the first one will be featured.`);
+  console.warn('\x1b[33m%s\x1b[0m', `Pinned posts: ${pinnedPosts.map(p => p.data.title).join(', ')}`);
+}
+const sortedPosts = pinnedPosts.length > 0 ? pinnedPosts : posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 const latestPost = sortedPosts[0];
 
 const repos = await getCollection('repos');
-const sortedRepos = repos.sort((a, b) => b.slug.localeCompare(a.slug));
-const latestRepo = sortedRepos[0];
+const pinnedRepos = repos.filter(repo => repo.data.pin);
+if (pinnedRepos.length > 1) {
+  console.warn('\x1b[33m%s\x1b[0m', `[WARNING]: ${pinnedRepos.length} repos are pinned. Only the first one will be featured.`);
+  console.warn('\x1b[33m%s\x1b[0m', `Pinned repos: ${pinnedRepos.map(r => r.data.title).join(', ')}`);
+}
+const sortedRepos = pinnedRepos.length > 0 
+  ? pinnedRepos 
+  : repos.sort((a, b) => b.slug.localeCompare(a.slug));
+const latestRepo = sortedRepos.length > 0 ? sortedRepos[0] : null;
 ---
 
 <section class="mt-12">

@@ -130,6 +130,7 @@ All blog posts and repos are written in Markdown and stored in `src/content/`. E
 - `description` - A short description of the post
 - `pubDate` - Publication date in YYYY-MM-DD format
 - `tags` - Optional array of tags
+- `pin` - Optional boolean to pin the post or repo on `Recommended Reading` (only ONE for posts or repos)
 - `language` - Reops' language usage for its post
 - `repoUrl` - The github URL of the repo
 

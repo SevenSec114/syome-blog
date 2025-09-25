@@ -7,6 +7,7 @@ const posts = defineCollection({
     pubDate: z.date(),
     tags: z.array(z.string()).optional(),
     category: z.string().optional(),
+    pin: z.boolean().optional(),
   }),
 });
 
@@ -18,6 +19,7 @@ const repos = defineCollection({
     repoUrl: z.string().optional(),
     languages: z.array(z.string()).optional(),
     category: z.string().optional(),
+    pin: z.boolean().optional(),
   }),
 });
 
