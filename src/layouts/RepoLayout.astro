@@ -13,14 +13,14 @@ const { title, repoUrl, languages } = Astro.props as Props;
 ---
 
 <!doctype html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full" style="scroll-padding-top: 4.5rem;">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
-</head>
+	</head>
 	<body class="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
 		<div class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center page-loader">
 			<div class="text-2xl font-bold text-gray-800 dark:text-white loader-text">Loading...</div>
